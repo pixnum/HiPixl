@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UpSharp - Photo Upscaler</title>
+<link rel="icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABxUlEQVQ4T6WTz0tUURTHP5k0i6VNYi6Sg1uFqIYkEoYQQklQoQ0lXbEkt1E1hZQ3UQglpCqCqqoqSQVcoIUqGpXgMIYl1naOe74zmVkh4cq9znHOfccM6f4K6AcyS4eFPRFFP3A9V+t6DbJvUO7S6o5ZBnyP+6BuQwrDkkF6cbkTjNv7h2lms0RKhFyX4CXb0rG8P/3lAybCahHBVuLkDltc42nV6pkFRC0KzoVg91m20eDq1o6qUwh0oeRMfG3ZRXG9JkUqfVt2qbl3bEuhJbxxXzGclU3KKq+K32Ncw5ym0VefEcwOS9l3vW1TUt8u9YbC7HctKk+TfLThEeeH4chWq7lZk1T0jFfM7pxHyzvJhzlNsvxR8wS1K0vTR+96Yq7D0nS6HcZ5KwH+0YyWt6wA/EZ4XezFODwK+Rx7z0Uw7qUDe7OV2u7g5ZX+7uPfoX1gUM7iOXsq4Ojv7B79W7hnQF5qlMryM/DcshVYNu+KgLx6b4R+8/wy1eCn8mThNc5sxrkK7Fqu7jL1wTflm1IhHkXfN0LdT/YAvxW+e85Ob6NAAAAAElFTkSuQmCC">
+<style>
+:root {
+    --bg-light: #e0e0e0;
+    --bg-dark: #1a1a1a;
+    --card-light: #f0f0f0;
+    --card-dark: #2a2a2a;
+    --shadow-light: rgba(0,0,0,0.2);
+    --shadow-dark: rgba(0,0,0,0.7);
+    --text-light: #000;
+    --text-dark: #fff;
+    --primary: #4CAF50;
+}
+body {
+    margin: 0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background: var(--bg-light);
+    transition: background 0.3s, color 0.3s;
+}
+body.dark {
+    background: var(--bg-dark);
+    color: var(--text-dark);
+}
+.container {
+    background: var(--card-light);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: 10px 10px 20px var(--shadow-light), -10px -10px 20px var(--shadow-light);
+    text-align: center;
+    max-width: 90%;
+    width: 400px;
+    transition: background 0.3s, box-shadow 0.3s;
+}
+body.dark .container {
+    background: var(--card-dark);
+    box-shadow: 10px 10px 20px var(--shadow-dark), -10px -10px 20px var(--shadow-dark);
+}
+h1 {
+    margin-bottom: 15px;
+}
+input[type="file"] {
+    display: none;
+}
+label.upload-btn, button {
+    display: inline-block;
+    padding: 12px 25px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: bold;
+    margin: 5px;
+    box-shadow: 0 6px rgba(0,0,0,0.4), 4px 4px 8px rgba(0,0,0,0.3);
+    transition: all 0.2s ease;
+    color: #fff;
+    border: none;
+}
+label.upload-btn {
+    background: var(--primary);
+    box-shadow: 0 6px #2e7d32, 4px 4px 8px rgba(0,0,0,0.3);
+}
+button.clear-btn { background: #f44336; box-shadow: 0 6px #9a1c12, 4px 4px 8px rgba(0,0,0,0.3);}
+button.download-btn { background: #2196F3; box-shadow: 0 6px #0d47a1, 4px 4px 8px rgba(0,0,0,0.3);}
+button.dark-toggle { background: #555; box-shadow: 0 6px #222, 4px 4px 8px rgba(0,0,0,0.3);}
+
+label.upload-btn:hover, button:hover {
+    transform: translateY(-3px);
+    filter: brightness(1.1);
+}
+label.upload-btn:active, button:active {
+    transform: translateY(2px);
+    filter: brightness(0.9);
+}
+
+#output {
+    max-width: 100%;
+    max-height: 300px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: inset 4px 4px 8px rgba(0,0,0,0.2), inset -4px -4px 8px rgba(255,255,255,0.5);
+}
+select {
+    margin-bottom: 15px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: none;
+    box-shadow: inset 3px 3px 6px rgba(0,0,0,0.2), inset -3px -3px 6px rgba(255,255,255,0.5);
+}
+@media(max-width:500px){
+    .container { width: 95%; padding: 20px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>UpSharp</h1>
+    <label class="upload-btn" for="file">Choose Photo</label>
+    <input type="file" id="file" accept="image/*">
+    <br>
+    <select id="scale">
+        <option value="1">1x</option>
+        <option value="2">2x</option>
+        <option value="4">4x</option>
+        <option value="6">6x</option>
+        <option value="8">8x</option>
+        <option value="10">10x</option>
+    </select>
+    <br>
+    <canvas id="output"></canvas>
+    <br>
+    <button class="clear-btn">Clear</button>
+    <button class="download-btn">Download</button>
+    <button class="dark-toggle">Dark Mode</button>
+    <p style="margin-top:15px;font-size:12px;">© UpSharp 2025</p>
+</div>
+
+<script>
+const fileInput = document.getElementById('file');
+const canvas = document.getElementById('output');
+const ctx = canvas.getContext('2d');
+const clearBtn = document.querySelector('.clear-btn');
+const downloadBtn = document.querySelector('.download-btn');
+const darkToggle = document.querySelector('.dark-toggle');
+const scaleSelector = document.getElementById('scale');
+const uploadBtn = document.querySelector('.upload-btn');
+let img = new Image();
+
+// Web Audio API: subtle click sound
+function playClickSound() {
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = audioCtx.createOscillator();
+    const gainNode = audioCtx.createGain();
+
+    oscillator.type = "square";
+    oscillator.frequency.setValueAtTime(600, audioCtx.currentTime); // frequency
+    gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime); // volume
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+
+    oscillator.start();
+    oscillator.stop(audioCtx.currentTime + 0.08); // short click
+}
+
+[fileInput, clearBtn, downloadBtn, darkToggle, uploadBtn].forEach(el => {
+    el.addEventListener('click', playClickSound);
+});
+
+fileInput.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { img.src = reader.result; }
+    reader.readAsDataURL(file);
+});
+
+img.onload = () => upscale();
+
+scaleSelector.addEventListener('change', upscale);
+
+function upscale() {
+    const scale = parseInt(scaleSelector.value);
+    canvas.width = img.width * scale;
+    canvas.height = img.height * scale;
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+}
+
+clearBtn.addEventListener('click', () => {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    fileInput.value = '';
+});
+
+downloadBtn.addEventListener('click', () => {
+    if (canvas.width === 0 || canvas.height === 0) return;
+    const link = document.createElement('a');
+    link.download = 'upscaled.png';
+    link.href = canvas.toDataURL();
+    link.click();
+});
+
+darkToggle.addEventListener('click', () => {
+    document.body.classList.toggle('dark');
+});
+</script>
+</body>
+</html>
