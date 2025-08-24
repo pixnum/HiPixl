@@ -4,6 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>UpSharp — Photo Upscaler</title>
+
+  <!-- Embedded SVG Favicon -->
+  <link rel="icon" href="data:image/svg+xml,
+  <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
+  <circle cx='12' cy='12' r='10' fill='%23ffcc00'/>
+  <circle cx='12' cy='12' r='5' fill='%23000'/>
+  </svg>">
+
   <style>
     :root {
       --bg: #1a1a1a;
@@ -67,6 +75,12 @@
       flex-wrap: wrap;
     }
 
+    .toolbar-group label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .btn, input[type="file"], select, input[type="range"] {
       padding: 10px 15px;
       border-radius: 12px;
@@ -82,12 +96,19 @@
       transform: scale(1.05);
     }
 
+    /* Fixed width for scale range for smooth dragging */
+    #scaleRange {
+      width: 250px;
+      min-width: 250px;
+      max-width: 250px;
+    }
+
     canvas {
       max-width: 100%;
       max-height: 70vh;
       margin: 0 auto;
       border-radius: 12px;
-      background: #111;
+      background: transparent;
       display: block;
     }
 
@@ -101,23 +122,34 @@
       line-height: 1.5em;
     }
 
+    #maxScaleInfo {
+      margin-top: 5px;
+      font-size: 0.9em;
+      color: #ffcc00;
+    }
+
     footer {
       margin-top: 5px;
       font-size: 0.9em;
       opacity: 0.7;
     }
+
+    input:disabled, select:disabled, .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 <body>
   <div class="app-frame">
-    <h1>📷UpSharp</h1>
+    <h1>📷 UpSharp</h1>
 
     <!-- Toolbar 1 -->
     <div class="toolbar">
       <div class="toolbar-group">
         <input type="file" id="fileInput" accept="image/*">
         <button class="btn" id="clearBtn">Clear</button>
-        <button class="btn" id="downloadBtn">Download</button>
+        <button class="btn" id="downloadBtn" disabled>Download</button>
       </div>
       <div class="toolbar-group">
         <button class="btn" id="modeToggle">🌙</button>
@@ -129,13 +161,13 @@
       <div class="toolbar-group">
         <label>
           Scale: <span id="scaleLabel">1x</span>
-          <input type="range" id="scaleRange" min="1" max="10" value="1">
+          <input type="range" id="scaleRange" min="1" max="250" value="1" disabled>
         </label>
       </div>
       <div class="toolbar-group">
         <label>
           Quality:
-          <select id="qualitySelect">
+          <select id="qualitySelect" disabled>
             <option value="low">Low</option>
             <option value="medium" selected>Medium</option>
             <option value="high">High</option>
@@ -148,6 +180,7 @@
 
     <!-- Info box -->
     <div id="infoBox">No image loaded.</div>
+    <div id="maxScaleInfo"></div>
 
     <footer>© UpSharp 2025</footer>
   </div>
@@ -162,15 +195,45 @@
     const afterCanvas = document.getElementById('afterCanvas');
     const modeToggle = document.getElementById('modeToggle');
     const infoBox = document.getElementById('infoBox');
+    const maxScaleInfo = document.getElementById('maxScaleInfo');
 
     let img = new Image();
+
+    function enableControls(enabled) {
+      scaleRange.disabled = !enabled;
+      qualitySelect.disabled = !enabled;
+      downloadBtn.disabled = !enabled;
+    }
+
+    function drawPreview(targetWidth, targetHeight){
+      const maxDisplayWidth = window.innerWidth * 0.9;
+      const maxDisplayHeight = window.innerHeight * 0.7;
+      let scale = Math.min(maxDisplayWidth/targetWidth, maxDisplayHeight/targetHeight, 1);
+      afterCanvas.style.width = (targetWidth*scale)+"px";
+      afterCanvas.style.height = (targetHeight*scale)+"px";
+    }
+
+    function updateMaxScale(){
+      if(!img.src) {
+        maxScaleInfo.textContent = "";
+        return;
+      }
+      const maxMP = 100_000_000;
+      const scaleX = Math.sqrt(maxMP / (img.width*img.height));
+      const safeScale = Math.floor(scaleX);
+      maxScaleInfo.textContent = `Max Safe Scale: ${safeScale}x (100 MP limit)`;
+    }
 
     fileInput.addEventListener('change', e=>{
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
       reader.onload = ev=>{
-        img.onload = ()=> performUpscale();
+        img.onload = ()=> {
+          performUpscale();
+          enableControls(true);
+          updateMaxScale();
+        };
         img.src = ev.target.result;
       };
       reader.readAsDataURL(file);
@@ -181,12 +244,13 @@
       ctx.clearRect(0,0,afterCanvas.width,afterCanvas.height);
       fileInput.value = "";
       img.src = "";
+      enableControls(false);
 
-      // Reset settings
       scaleRange.value = 1;
       scaleLabel.textContent = "1x";
       qualitySelect.value = "medium";
       infoBox.textContent = "No image loaded.";
+      maxScaleInfo.textContent = "";
     });
 
     downloadBtn.addEventListener('click', ()=>{
@@ -208,7 +272,7 @@
       const factor = parseInt(scaleRange.value);
       let targetWidth = img.width * factor;
       let targetHeight = img.height * factor;
-      const maxMP = 100_000_000; // 100 megapixels
+      const maxMP = 100_000_000;
       if(targetWidth*targetHeight > maxMP){
         const scale = Math.sqrt(maxMP/(targetWidth*targetHeight));
         targetWidth = Math.floor(targetWidth*scale);
@@ -217,30 +281,36 @@
       afterCanvas.width = targetWidth;
       afterCanvas.height = targetHeight;
       const ctx = afterCanvas.getContext('2d');
+      ctx.clearRect(0,0,targetWidth,targetHeight);
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = qualitySelect.value;
       ctx.drawImage(img,0,0,targetWidth,targetHeight);
 
-      updateInfo(targetWidth, targetHeight);
+      drawPreview(targetWidth, targetHeight);
+      updateInfo(targetWidth, targetHeight, factor);
     }
 
-    function updateInfo(w, h){
+    function updateInfo(w, h, factor){
       const mp = (w*h/1_000_000).toFixed(2);
-      // Estimate file size: assume 3 bytes/pixel, compression ~0.25 (rough)
       const estBytes = w*h*3*0.25;
       const estMB = (estBytes/1024/1024).toFixed(2);
 
-      // Print size at 300 DPI
       const inchesW = (w/300).toFixed(2);
       const inchesH = (h/300).toFixed(2);
       const cmW = (inchesW*2.54).toFixed(1);
       const cmH = (inchesH*2.54).toFixed(1);
+
+      let warning = "";
+      if(factor > 50){
+        warning = "<br><em>Warning: very high scale may reduce performance or browser may limit memory usage.</em>";
+      }
 
       infoBox.innerHTML = `
         <b>Upscaled Info:</b><br>
         Dimensions: ${w} × ${h} px (${mp} MP)<br>
         Est. File Size: ~${estMB} MB<br>
         Print Size @300DPI: ${inchesW}" × ${inchesH}" (${cmW} × ${cmH} cm)
+        ${warning}
       `;
     }
 
@@ -249,6 +319,20 @@
       document.body.classList.toggle('light');
       modeToggle.textContent = document.body.classList.contains('light') ? "☀️" : "🌙";
     });
+
+    // Drag & Drop support
+    afterCanvas.addEventListener('dragover', e => e.preventDefault());
+    afterCanvas.addEventListener('drop', e => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if(file){
+        fileInput.files = e.dataTransfer.files;
+        fileInput.dispatchEvent(new Event('change'));
+      }
+    });
+
+    // Initialize controls as disabled
+    enableControls(false);
   </script>
 </body>
 </html>
