@@ -4,56 +4,57 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HiPixl — Photo Upscaler</title>
-
-  <!-- Embedded SVG Favicon -->
   <link rel="icon" href="data:image/svg+xml,
-  <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'>
-  <circle cx='12' cy='12' r='10' fill='%23ffcc00'/>
-  <circle cx='12' cy='12' r='5' fill='%23000'/>
-  </svg>">
-
+    <svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'>
+      <rect width='100' height='100' rx='20' ry='20' fill='%2300c3ff'/>
+      <text x='50%' y='55%' font-size='45' text-anchor='middle' fill='white' font-family='Arial'>📷</text>
+    </svg>">
   <style>
     :root {
-      --bg: #1a1a1a;
-      --fg: #f0f0f0;
-      --card-bg: #222;
-      --border: #444;
+      --bg: linear-gradient(135deg, #1e1e2f, #2a2a40);
+      --fg: #fdfdfd;
+      --card-bg: #2d2d44;
+      --border: #555;
+      --accent: #00c3ff;
     }
     body.light {
-      --bg: #f7f7f7;
+      --bg: linear-gradient(135deg, #fdfdfd, #f2f2f9);
       --fg: #1a1a1a;
-      --card-bg: #fff;
+      --card-bg: #ffffff;
       --border: #ccc;
+      --accent: #0077ff;
     }
 
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Arial, sans-serif;
       background: var(--bg);
       color: var(--fg);
       display: flex;
       align-items: center;
       justify-content: center;
       min-height: 100vh;
-      transition: background 0.3s, color 0.3s;
+      transition: all 0.4s ease;
     }
 
     .app-frame {
       background: var(--card-bg);
       border: 2px solid var(--border);
-      border-radius: 16px;
-      padding: 20px;
+      border-radius: 20px;
+      padding: 25px;
       max-width: 950px;
       width: 95%;
       text-align: center;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.4);
+      box-shadow: 0 10px 28px rgba(0,0,0,0.5);
       display: flex;
       flex-direction: column;
-      gap: 15px;
+      gap: 18px;
     }
 
     h1 {
-      margin: 0 0 10px;
+      margin: 0;
+      font-size: 2.2em;
+      color: var(--accent);
     }
 
     .toolbar {
@@ -63,8 +64,8 @@
       flex-wrap: wrap;
       gap: 10px;
       padding: 12px;
-      border-radius: 12px;
-      background: var(--bg);
+      border-radius: 14px;
+      background: rgba(0,0,0,0.1);
       border: 1px solid var(--border);
     }
 
@@ -75,12 +76,6 @@
       flex-wrap: wrap;
     }
 
-    .toolbar-group label {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
     .btn, input[type="file"], select, input[type="range"] {
       padding: 10px 15px;
       border-radius: 12px;
@@ -88,44 +83,59 @@
       background: var(--card-bg);
       color: var(--fg);
       cursor: pointer;
+      font-weight: 500;
       box-shadow: inset 3px 3px 6px rgba(0,0,0,0.4),
-                  inset -3px -3px 6px rgba(255,255,255,0.1);
+                  inset -3px -3px 6px rgba(255,255,255,0.08);
       transition: transform 0.1s, background 0.3s, color 0.3s;
     }
     .btn:hover, input[type="file"]:hover, select:hover {
       transform: scale(1.05);
+      background: var(--accent);
+      color: white;
     }
 
-    /* Fixed width for scale range for smooth dragging */
-    #scaleRange {
-      width: 250px;
-      min-width: 250px;
-      max-width: 250px;
+    input[type="range"] {
+      width: 200px;
+      appearance: none;
+      background: transparent;
+    }
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 8px;
+      background: var(--border);
+      border-radius: 5px;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: var(--accent);
+      cursor: grab;
+      margin-top: -6px;
+      transition: transform 0.2s;
+    }
+    input[type="range"]::-webkit-slider-thumb:active {
+      transform: scale(1.2);
+      cursor: grabbing;
     }
 
     canvas {
       max-width: 100%;
       max-height: 70vh;
       margin: 0 auto;
-      border-radius: 12px;
-      background: transparent;
+      border-radius: 14px;
+      background: #111;
       display: block;
     }
 
     #infoBox {
       margin-top: 10px;
-      padding: 10px;
-      border-radius: 10px;
-      background: var(--bg);
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(0,0,0,0.15);
       border: 1px solid var(--border);
       font-size: 0.95em;
-      line-height: 1.5em;
-    }
-
-    #maxScaleInfo {
-      margin-top: 5px;
-      font-size: 0.9em;
-      color: #ffcc00;
+      line-height: 1.6em;
     }
 
     footer {
@@ -133,23 +143,18 @@
       font-size: 0.9em;
       opacity: 0.7;
     }
-
-    input:disabled, select:disabled, .btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
   </style>
 </head>
 <body>
   <div class="app-frame">
-    <h1>📷 HiPixl</h1>
+    <h1>✨HiPixl</h1>
 
     <!-- Toolbar 1 -->
     <div class="toolbar">
       <div class="toolbar-group">
         <input type="file" id="fileInput" accept="image/*">
         <button class="btn" id="clearBtn">Clear</button>
-        <button class="btn" id="downloadBtn" disabled>Download</button>
+        <button class="btn" id="downloadBtn">Download</button>
       </div>
       <div class="toolbar-group">
         <button class="btn" id="modeToggle">🌙</button>
@@ -161,13 +166,13 @@
       <div class="toolbar-group">
         <label>
           Scale: <span id="scaleLabel">1x</span>
-          <input type="range" id="scaleRange" min="1" max="250" value="1" disabled>
+          <input type="range" id="scaleRange" min="1" max="250" value="1">
         </label>
       </div>
       <div class="toolbar-group">
         <label>
           Quality:
-          <select id="qualitySelect" disabled>
+          <select id="qualitySelect">
             <option value="low">Low</option>
             <option value="medium" selected>Medium</option>
             <option value="high">High</option>
@@ -180,7 +185,6 @@
 
     <!-- Info box -->
     <div id="infoBox">No image loaded.</div>
-    <div id="maxScaleInfo"></div>
 
     <footer>© HiPixl 2025</footer>
   </div>
@@ -195,45 +199,15 @@
     const afterCanvas = document.getElementById('afterCanvas');
     const modeToggle = document.getElementById('modeToggle');
     const infoBox = document.getElementById('infoBox');
-    const maxScaleInfo = document.getElementById('maxScaleInfo');
 
     let img = new Image();
-
-    function enableControls(enabled) {
-      scaleRange.disabled = !enabled;
-      qualitySelect.disabled = !enabled;
-      downloadBtn.disabled = !enabled;
-    }
-
-    function drawPreview(targetWidth, targetHeight){
-      const maxDisplayWidth = window.innerWidth * 0.9;
-      const maxDisplayHeight = window.innerHeight * 0.7;
-      let scale = Math.min(maxDisplayWidth/targetWidth, maxDisplayHeight/targetHeight, 1);
-      afterCanvas.style.width = (targetWidth*scale)+"px";
-      afterCanvas.style.height = (targetHeight*scale)+"px";
-    }
-
-    function updateMaxScale(){
-      if(!img.src) {
-        maxScaleInfo.textContent = "";
-        return;
-      }
-      const maxMP = 100_000_000;
-      const scaleX = Math.sqrt(maxMP / (img.width*img.height));
-      const safeScale = Math.floor(scaleX);
-      maxScaleInfo.textContent = `Max Safe Scale: ${safeScale}x (100 MP limit)`;
-    }
 
     fileInput.addEventListener('change', e=>{
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
       reader.onload = ev=>{
-        img.onload = ()=> {
-          performUpscale();
-          enableControls(true);
-          updateMaxScale();
-        };
+        img.onload = ()=> performUpscale();
         img.src = ev.target.result;
       };
       reader.readAsDataURL(file);
@@ -244,13 +218,11 @@
       ctx.clearRect(0,0,afterCanvas.width,afterCanvas.height);
       fileInput.value = "";
       img.src = "";
-      enableControls(false);
 
       scaleRange.value = 1;
       scaleLabel.textContent = "1x";
       qualitySelect.value = "medium";
       infoBox.textContent = "No image loaded.";
-      maxScaleInfo.textContent = "";
     });
 
     downloadBtn.addEventListener('click', ()=>{
@@ -272,25 +244,25 @@
       const factor = parseInt(scaleRange.value);
       let targetWidth = img.width * factor;
       let targetHeight = img.height * factor;
-      const maxMP = 100_000_000;
+
+      const maxMP = 200_000_000; // 200 megapixels
       if(targetWidth*targetHeight > maxMP){
         const scale = Math.sqrt(maxMP/(targetWidth*targetHeight));
         targetWidth = Math.floor(targetWidth*scale);
         targetHeight = Math.floor(targetHeight*scale);
       }
+
       afterCanvas.width = targetWidth;
       afterCanvas.height = targetHeight;
       const ctx = afterCanvas.getContext('2d');
-      ctx.clearRect(0,0,targetWidth,targetHeight);
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = qualitySelect.value;
       ctx.drawImage(img,0,0,targetWidth,targetHeight);
 
-      drawPreview(targetWidth, targetHeight);
-      updateInfo(targetWidth, targetHeight, factor);
+      updateInfo(targetWidth, targetHeight);
     }
 
-    function updateInfo(w, h, factor){
+    function updateInfo(w, h){
       const mp = (w*h/1_000_000).toFixed(2);
       const estBytes = w*h*3*0.25;
       const estMB = (estBytes/1024/1024).toFixed(2);
@@ -300,39 +272,18 @@
       const cmW = (inchesW*2.54).toFixed(1);
       const cmH = (inchesH*2.54).toFixed(1);
 
-      let warning = "";
-      if(factor > 50){
-        warning = "<br><em>Warning: very high scale may reduce performance or browser may limit memory usage.</em>";
-      }
-
       infoBox.innerHTML = `
         <b>Upscaled Info:</b><br>
         Dimensions: ${w} × ${h} px (${mp} MP)<br>
         Est. File Size: ~${estMB} MB<br>
         Print Size @300DPI: ${inchesW}" × ${inchesH}" (${cmW} × ${cmH} cm)
-        ${warning}
       `;
     }
 
-    // Toggle dark/light mode
     modeToggle.addEventListener('click', ()=>{
       document.body.classList.toggle('light');
       modeToggle.textContent = document.body.classList.contains('light') ? "☀️" : "🌙";
     });
-
-    // Drag & Drop support
-    afterCanvas.addEventListener('dragover', e => e.preventDefault());
-    afterCanvas.addEventListener('drop', e => {
-      e.preventDefault();
-      const file = e.dataTransfer.files[0];
-      if(file){
-        fileInput.files = e.dataTransfer.files;
-        fileInput.dispatchEvent(new Event('change'));
-      }
-    });
-
-    // Initialize controls as disabled
-    enableControls(false);
   </script>
 </body>
 </html>
