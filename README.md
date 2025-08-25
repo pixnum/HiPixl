@@ -1,2 +1,2 @@
-# UpSharp
+# HiPixl
 Photo Upscaling App
